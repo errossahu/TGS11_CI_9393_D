@@ -4,8 +4,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class UserModel extends CI_Model
 {
     private $table = 'users';
-
-
     public $id;
     public $name;
     public $email;
@@ -17,11 +15,37 @@ class UserModel extends CI_Model
             'rules' => 'required'
         ],
     ];
+
+
     public function Rules() { return $this->rule; }
    
-
     public function getAll() { return 
         $this->db->get('data_mahasiswa')->result(); 
+    }
+     public function user_login($request)
+    {
+        $this->email = $request->email;
+        $this->password = $request->password;
+        $row = $this->db->select('*')->get_where($this->table, array('email' => $this->email),1,0)->row();
+        
+        if(!empty($row))
+        {
+            if(password_verify($this->password, $row->password))
+            {
+                $timestamp = now();
+                $token = AUTHORIZATION::generateToken(['email' => $this->email,'password'=> $row->password,'timestamp' => $timestamp]);
+                $response = ['data' => $row, 'token' => $token];
+                
+                return $response;
+            }
+            else
+            {
+                return ['msg' => 'Invalid username or password!','error' => true];
+            }
+        }
+        else{
+            return ['msg' => 'User tidak ditemukan!','error' => true];
+        }
     } 
     public function store($request) { 
         $this->name = $request->name; 
